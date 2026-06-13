@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Agenda Personal ✿</title>
+<style>
+/* ============================================================
+   TOKENS Y VARIABLES GLOBALES
+   ============================================================ */
+:root {
+  --bg:        #FEEFF2;
+  --card:      #FFFFFF;
+  --rosa-l:    #FBD8DF;
+  --rosa-m:    #F098AC;
+  --rosa-d:    #C98091;
+  --gris-r:    #D8BCC2;
+  --texto:     #151617;
+  --texto-s:   #6B4C55;
+  --blanco:    #FFFFFF;
+  --verde:     #7DC9A0;
+  --amarillo:  #F5C96A;
+  --rojo:      #E07080;
+  --sombra:    0 4px 24px rgba(201,128,145,0.13);
+  --sombra-h:  0 8px 32px rgba(201,128,145,0.22);
+  --radius:    18px;
+  --radius-s:  10px;
+  --trans:     0.22s ease;
+}
+
+/* ============================================================
+   RESET Y BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', 'Arial Rounded MT Bold', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--texto);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   FONDO DE ONDAS SVG (abstracto, decorativo)
+   ============================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 900'%3E%3Cellipse cx='200' cy='100' rx='600' ry='260' fill='%23FBD8DF' opacity='0.45'/%3E%3Cellipse cx='1300' cy='750' rx='500' ry='220' fill='%23F098AC' opacity='0.18'/%3E%3Cellipse cx='900' cy='200' rx='400' ry='180' fill='%23C98091' opacity='0.09'/%3E%3Cellipse cx='100' cy='800' rx='350' ry='140' fill='%23FBD8DF' opacity='0.25'/%3E%3C/svg%3E")
+    center / cover no-repeat fixed;
+  pointer-events: none;
+}
+
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+#app { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+#sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #FBD8DF 0%, #FEEFF2 60%, #F098AC22 100%);
+  border-right: 1.5px solid var(--rosa-l);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 24px 0;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+  box-shadow: 2px 0 18px rgba(201,128,145,0.10);
+  transition: transform var(--trans);
+}
+#sidebar-logo {
+  padding: 28px 20px 18px 20px;
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: var(--rosa-d);
+  letter-spacing: 0.01em;
+  border-bottom: 1.5px solid var(--rosa-l);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#sidebar-logo span { font-size: 1.7rem; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 20px;
+  cursor: pointer;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--texto-s);
+  transition: background var(--trans), color var(--trans);
+  margin: 2px 8px 2px 0;
+  position: relative;
+}
+.nav-item:hover { background: var(--rosa-l); color: var(--rosa-d); }
+.nav-item.active {
+  background: linear-gradient(90deg, var(--rosa-l), #F098AC33);
+  color: var(--rosa-d);
+  box-shadow: inset 3px 0 0 var(--rosa-d);
+}
+.nav-item .icon { font-size: 1.2rem; width: 22px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--rosa-m);
+  color: #fff;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* MAIN CONTENT */
+#main {
+  margin-left: 240px;
+  flex: 1;
+  padding: 28px 32px 48px 32px;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   TOPBAR (móvil)
+   ============================================================ */
+#topbar {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--blanco);
+  border-bottom: 1.5px solid var(--rosa-l);
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: var(--sombra);
+}
+#hamburger {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.5rem; color: var(--rosa-d);
+  line-height: 1;
+}
+#topbar-title { font-weight: 800; color: var(--rosa-d); font-size: 1.1rem; }
+
+/* OVERLAY móvil */
+#overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 99;
+  background: rgba(21,22,23,0.30);
+  backdrop-filter: blur(2px);
+}
+
+/* ============================================================
+   SECCIONES
+   ============================================================ */
+.section { display: none; animation: fadeIn 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+
+/* ENCABEZADO DE SECCIÓN */
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 24px;
+}
+.section-header h2 {
+  font-size: 1.6rem; font-weight: 900;
+  color: var(--rosa-d);
+}
+.section-header .section-icon { font-size: 2rem; }
+.btn-add {
+  margin-left: auto;
+  background: linear-gradient(135deg, var(--rosa-m), var(--rosa-d));
+  color: #fff;
+  border: none;
+  border-radius: 99px;
+  padding: 9px 22px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(240,152,172,0.30);
+  transition: box-shadow var(--trans), transform var(--trans);
+  display: flex; align-items: center; gap: 7px;
+}
+.btn-add:hover { box-shadow: var(--sombra-h); transform: translateY(-1px); }
+
+/* BÚSQUEDA / FILTRO */
+.search-bar {
+  display: flex; gap: 10px; margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.search-bar input, .search-bar select {
+  border: 1.5px solid var(--rosa-l);
+  border-radius: var(--radius-s);
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: var(--texto);
+  outline: none;
+  transition: border-color var(--trans);
+  flex: 1; min-width: 140px;
+}
+.search-bar input:focus, .search-bar select:focus { border-color: var(--rosa-m); }
+
+/* ============================================================
+   TARJETAS / CARDS
+   ============================================================ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  padding: 20px 22px 16px 22px;
+  position: relative;
+  border: 1.5px solid var(--rosa-l);
+  transition: box-shadow var(--trans), transform var(--trans);
+}
+.card:hover { box-shadow: var(--sombra-h); transform: translateY(-2px); }
+.card-title {
+  font-size: 1rem; font-weight: 800;
+  color: var(--texto); margin-bottom: 6px;
+  padding-right: 64px;
+}
+.card-meta {
+  font-size: 0.82rem; color: var(--texto-s);
+  display: flex; flex-wrap: wrap; gap: 7px;
+  margin-bottom: 8px;
+}
+.card-meta span { display: flex; align-items: center; gap: 3px; }
+.card-notes { font-size: 0.84rem; color: #8a6672; margin-top: 4px; }
+.card-actions {
+  position: absolute; top: 14px; right: 14px;
+  display: flex; gap: 6px;
+}
+.btn-icon {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.05rem; border-radius: 8px;
+  padding: 4px 6px;
+  transition: background var(--trans);
+  line-height: 1;
+}
+.btn-icon:hover { background: var(--rosa-l); }
+.btn-icon.del:hover { background: #fde8eb; }
+
+/* BADGES DE ESTADO / PRIORIDAD */
+.badge {
+  display: inline-block;
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.badge-pend   { background: #FFF3CD; color: #7D6000; }
+.badge-done   { background: #D4EDDA; color: #1D6435; }
+.badge-alta   { background: #FDDDE6; color: #B0223D; }
+.badge-media  { background: #FFF3CD; color: #7D6000; }
+.badge-baja   { background: #D4F0E8; color: #1A6652; }
+.badge-ing    { background: #D4EDDA; color: #1D6435; }
+.badge-gasto  { background: #FDDDE6; color: #B0223D; }
+.badge-info   { background: var(--rosa-l); color: var(--rosa-d); }
+.badge-purple { background: #EDE7F6; color: #6A1B9A; }
+.badge-blue   { background: #E3F2FD; color: #1565C0; }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--gris-r);
+  font-size: 1rem;
+}
+.empty-state .emoji { font-size: 3.2rem; margin-bottom: 12px; }
+
+/* ============================================================
+   DASHBOARD (INICIO)
+   ============================================================ */
+#dash-greeting {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--rosa-d);
+  margin-bottom: 6px;
+}
+#dash-date { font-size: 0.96rem; color: var(--texto-s); margin-bottom: 28px; }
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.dash-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  padding: 20px 22px;
+  border: 1.5px solid var(--rosa-l);
+  cursor: pointer;
+  transition: box-shadow var(--trans), transform var(--trans);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dash-card:hover { box-shadow: var(--sombra-h); transform: translateY(-2px); }
+.dash-card-icon { font-size: 1.9rem; }
+.dash-card-label { font-size: 0.82rem; color: var(--texto-s); font-weight: 600; }
+.dash-card-value {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: var(--rosa-d);
+  line-height: 1.1;
+}
+.dash-card-sub { font-size: 0.8rem; color: var(--texto-s); }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-backdrop {
+  display: none;
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(21,22,23,0.38);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 48px rgba(201,128,145,0.22);
+  padding: 28px 30px 24px 30px;
+  width: 100%; max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: popIn 0.22s cubic-bezier(.38,1.2,.6,1);
+  position: relative;
+}
+@keyframes popIn {
+  from { opacity:0; transform: scale(0.93) translateY(16px); }
+  to   { opacity:1; transform: none; }
+}
+.modal-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+.modal-header h3 { font-size: 1.2rem; font-weight: 800; color: var(--rosa-d); }
+.modal-close {
+  margin-left: auto; background: none; border: none;
+  font-size: 1.4rem; cursor: pointer; color: var(--gris-r);
+  border-radius: 8px; padding: 2px 6px;
+  transition: background var(--trans), color var(--trans);
+}
+.modal-close:hover { background: var(--rosa-l); color: var(--rosa-d); }
+
+/* FORMULARIO EN MODAL */
+.form-grid { display: grid; gap: 14px; }
+.form-row { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 0.83rem; font-weight: 700; color: var(--texto-s); }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  border: 1.5px solid var(--rosa-l);
+  border-radius: var(--radius-s);
+  padding: 9px 13px;
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--texto);
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--trans);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--rosa-m); background: #fff; }
+.form-group textarea { resize: vertical; min-height: 68px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--rosa-m), var(--rosa-d));
+  color: #fff; border: none; border-radius: 99px;
+  padding: 10px 26px; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; box-shadow: 0 2px 10px rgba(240,152,172,0.25);
+  transition: box-shadow var(--trans), transform var(--trans);
+}
+.btn-primary:hover { box-shadow: var(--sombra-h); transform: translateY(-1px); }
+.btn-secondary {
+  background: var(--rosa-l); color: var(--rosa-d); border: none;
+  border-radius: 99px; padding: 10px 20px;
+  font-size: 0.92rem; font-weight: 700; cursor: pointer;
+  transition: background var(--trans);
+}
+.btn-secondary:hover { background: var(--gris-r); }
+
+/* ============================================================
+   FINANZAS — resumen
+   ============================================================ */
+.fin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.fin-box {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  padding: 18px 20px;
+  border: 1.5px solid var(--rosa-l);
+  text-align: center;
+}
+.fin-box-label { font-size: 0.8rem; color: var(--texto-s); font-weight: 700; margin-bottom: 4px; }
+.fin-box-value { font-size: 1.5rem; font-weight: 900; }
+.fin-verde { color: #1D6435; }
+.fin-rojo  { color: #B0223D; }
+.fin-azul  { color: #1565C0; }
+
+/* ============================================================
+   CICLO MENSTRUAL — predicción
+   ============================================================ */
+.ciclo-prediccion {
+  background: linear-gradient(135deg, var(--rosa-l), #FBD8DF88);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  border: 1.5px solid var(--rosa-m);
+  display: flex; align-items: center; gap: 14px;
+}
+.ciclo-prediccion .big-icon { font-size: 2.4rem; }
+.ciclo-prediccion-info h4 { font-size: 0.95rem; font-weight: 800; color: var(--rosa-d); }
+.ciclo-prediccion-info p  { font-size: 0.86rem; color: var(--texto-s); }
+
+/* ============================================================
+   BACKUP
+   ============================================================ */
+.backup-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  padding: 24px;
+  border: 1.5px solid var(--rosa-l);
+  margin-bottom: 18px;
+}
+.backup-card h4 { font-size: 1rem; font-weight: 800; color: var(--rosa-d); margin-bottom: 8px; }
+.backup-card p  { font-size: 0.86rem; color: var(--texto-s); margin-bottom: 14px; }
+.btn-backup {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: none; border-radius: 99px;
+  padding: 11px 24px; font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; transition: box-shadow var(--trans), transform var(--trans);
+}
+.btn-backup:hover { box-shadow: var(--sombra-h); transform: translateY(-1px); }
+.btn-backup-crear  { background: linear-gradient(135deg, var(--rosa-m), var(--rosa-d)); color: #fff; }
+.btn-backup-cargar { background: linear-gradient(135deg, #7DC9A0, #4BA87A); color: #fff; }
+#backup-file-input { display: none; }
+.backup-msg { margin-top: 12px; padding: 10px 16px; border-radius: var(--radius-s); font-size: 0.88rem; font-weight: 600; }
+.backup-msg.ok  { background: #D4EDDA; color: #1D6435; }
+.backup-msg.err { background: #FDDDE6; color: #B0223D; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px;
+  z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--card);
+  border-radius: var(--radius-s);
+  box-shadow: 0 6px 28px rgba(201,128,145,0.25);
+  padding: 13px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto);
+  border-left: 4px solid var(--rosa-m);
+  animation: slideIn 0.25s ease, fadeOut 0.4s ease 2.5s forwards;
+  min-width: 220px;
+  max-width: 320px;
+}
+.toast.ok  { border-color: var(--verde); }
+.toast.err { border-color: var(--rojo); }
+@keyframes slideIn { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform: none; } }
+@keyframes fadeOut { from { opacity:1; } to { opacity:0; pointer-events: none; } }
+
+/* MODAL CONFIRMACIÓN */
+#confirm-modal { max-width: 380px; }
+#confirm-modal .confirm-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.btn-danger { background: var(--rojo); color: #fff; border: none; border-radius: 99px; padding: 9px 22px; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+
+/* ============================================================
+   RESPONSIVE MÓVIL
+   ============================================================ */
+@media (max-width: 700px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: none; }
+  #overlay.open { display: block; }
+  #topbar { display: flex; }
+  #main { margin-left: 0; padding: 16px 14px 48px 14px; }
+  .form-row { grid-template-columns: 1fr; }
+  .fin-summary { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .dash-grid { grid-template-columns: 1fr; }
+}
+
+/* SCROLLBAR SUAVE */
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--gris-r); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR MÓVIL -->
+<div id="topbar">
+  <button id="hamburger" onclick="toggleSidebar()">☰</button>
+  <div id="topbar-title">✿ Mi Agenda</div>
+</div>
+
+<!-- OVERLAY MÓVIL -->
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODAL GENÉRICO -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal-content">
+    <!-- se llena dinámicamente -->
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div class="modal-backdrop" id="confirm-backdrop">
+  <div class="modal" id="confirm-modal">
+    <div class="modal-header">
+      <span style="font-size:1.6rem">⚠️</span>
+      <h3 id="confirm-title">¿Confirmar acción?</h3>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <p id="confirm-body" style="font-size:0.93rem;color:var(--texto-s)"></p>
+    <div class="confirm-btns">
+      <button class="btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-danger" id="confirm-ok-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div id="sidebar-logo">
+      <span>✿</span> Mi Agenda
+    </div>
+    <div class="nav-item active" onclick="goTo('inicio')"       data-section="inicio">       <span class="icon">🏠</span> Inicio</div>
+    <div class="nav-item" onclick="goTo('recordatorios')"       data-section="recordatorios"><span class="icon">🔔</span> Recordatorios <span class="nav-badge" id="badge-rec">0</span></div>
+    <div class="nav-item" onclick="goTo('medicamentos')"        data-section="medicamentos"> <span class="icon">💊</span> Medicamentos</div>
+    <div class="nav-item" onclick="goTo('ciclo')"               data-section="ciclo">        <span class="icon">🌸</span> Ciclo Menstrual</div>
+    <div class="nav-item" onclick="goTo('rutinas')"             data-section="rutinas">      <span class="icon">⭐</span> Rutinas</div>
+    <div class="nav-item" onclick="goTo('examenes')"            data-section="examenes">     <span class="icon">📚</span> Exámenes y Tareas</div>
+    <div class="nav-item" onclick="goTo('clases')"              data-section="clases">       <span class="icon">🎓</span> Clases</div>
+    <div class="nav-item" onclick="goTo('comidas')"             data-section="comidas">      <span class="icon">🍽️</span> Comidas</div>
+    <div class="nav-item" onclick="goTo('finanzas')"            data-section="finanzas">     <span class="icon">💰</span> Finanzas</div>
+    <div class="nav-item" onclick="goTo('backup')"              data-section="backup">       <span class="icon">☁️</span> Backups</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- ======================================================
+         INICIO / DASHBOARD
+    ====================================================== -->
+    <section id="sec-inicio" class="section active">
+      <div id="dash-greeting">Hola ✨</div>
+      <div id="dash-date"></div>
+      <div class="dash-grid" id="dash-grid"></div>
+    </section>
+
+    <!-- ======================================================
+         RECORDATORIOS
+    ====================================================== -->
+    <section id="sec-recordatorios" class="section">
+      <div class="section-header">
+        <span class="section-icon">🔔</span>
+        <h2>Recordatorios</h2>
+        <button class="btn-add" onclick="openModal('recordatorio')">＋ Nuevo</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-rec" placeholder="Buscar recordatorio..." oninput="renderSec('recordatorios')">
+        <select id="filter-rec-estado" onchange="renderSec('recordatorios')">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="completado">Completado</option>
+        </select>
+        <select id="filter-rec-prioridad" onchange="renderSec('recordatorios')">
+          <option value="">Todas las prioridades</option>
+          <option value="alta">Alta</option>
+          <option value="media">Media</option>
+          <option value="baja">Baja</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-recordatorios"></div>
+    </section>
+
+    <!-- ======================================================
+         MEDICAMENTOS
+    ====================================================== -->
+    <section id="sec-medicamentos" class="section">
+      <div class="section-header">
+        <span class="section-icon">💊</span>
+        <h2>Medicamentos</h2>
+        <button class="btn-add" onclick="openModal('medicamento')">＋ Nuevo</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-med" placeholder="Buscar medicamento..." oninput="renderSec('medicamentos')">
+        <select id="filter-med-estado" onchange="renderSec('medicamentos')">
+          <option value="">Todos</option>
+          <option value="tomado">Tomado</option>
+          <option value="no tomado">No tomado</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-medicamentos"></div>
+    </section>
+
+    <!-- ======================================================
+         CICLO MENSTRUAL
+    ====================================================== -->
+    <section id="sec-ciclo" class="section">
+      <div class="section-header">
+        <span class="section-icon">🌸</span>
+        <h2>Ciclo Menstrual</h2>
+        <button class="btn-add" onclick="openModal('ciclo')">＋ Registrar</button>
+      </div>
+      <div class="ciclo-prediccion" id="ciclo-prediccion" style="display:none">
+        <div class="big-icon">🌙</div>
+        <div class="ciclo-prediccion-info">
+          <h4 id="ciclo-pred-titulo">Próximo ciclo estimado</h4>
+          <p id="ciclo-pred-detalle"></p>
+        </div>
+      </div>
+      <div class="cards-grid" id="list-ciclo"></div>
+    </section>
+
+    <!-- ======================================================
+         RUTINAS
+    ====================================================== -->
+    <section id="sec-rutinas" class="section">
+      <div class="section-header">
+        <span class="section-icon">⭐</span>
+        <h2>Rutinas</h2>
+        <button class="btn-add" onclick="openModal('rutina')">＋ Nueva</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-rut" placeholder="Buscar rutina..." oninput="renderSec('rutinas')">
+        <select id="filter-rut-estado" onchange="renderSec('rutinas')">
+          <option value="">Todas</option>
+          <option value="completada">Completada</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-rutinas"></div>
+    </section>
+
+    <!-- ======================================================
+         EXÁMENES Y TAREAS
+    ====================================================== -->
+    <section id="sec-examenes" class="section">
+      <div class="section-header">
+        <span class="section-icon">📚</span>
+        <h2>Exámenes y Tareas</h2>
+        <button class="btn-add" onclick="openModal('examen')">＋ Nuevo</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-exa" placeholder="Buscar..." oninput="renderSec('examenes')">
+        <select id="filter-exa-tipo" onchange="renderSec('examenes')">
+          <option value="">Todos los tipos</option>
+          <option value="examen">Examen</option>
+          <option value="tarea">Tarea</option>
+          <option value="trabajo">Trabajo</option>
+        </select>
+        <select id="filter-exa-estado" onchange="renderSec('examenes')">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="entregado">Entregado</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-examenes"></div>
+    </section>
+
+    <!-- ======================================================
+         CLASES
+    ====================================================== -->
+    <section id="sec-clases" class="section">
+      <div class="section-header">
+        <span class="section-icon">🎓</span>
+        <h2>Clases</h2>
+        <button class="btn-add" onclick="openModal('clase')">＋ Nueva</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-cla" placeholder="Buscar clase o materia..." oninput="renderSec('clases')">
+        <select id="filter-cla-dia" onchange="renderSec('clases')">
+          <option value="">Todos los días</option>
+          <option>Lunes</option><option>Martes</option><option>Miércoles</option>
+          <option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-clases"></div>
+    </section>
+
+    <!-- ======================================================
+         COMIDAS
+    ====================================================== -->
+    <section id="sec-comidas" class="section">
+      <div class="section-header">
+        <span class="section-icon">🍽️</span>
+        <h2>Horario de Comidas</h2>
+        <button class="btn-add" onclick="openModal('comida')">＋ Nueva</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-com" placeholder="Buscar..." oninput="renderSec('comidas')">
+        <select id="filter-com-tipo" onchange="renderSec('comidas')">
+          <option value="">Todos los tipos</option>
+          <option value="desayuno">Desayuno</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="cena">Cena</option>
+          <option value="snack">Snack</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-comidas"></div>
+    </section>
+
+    <!-- ======================================================
+         FINANZAS
+    ====================================================== -->
+    <section id="sec-finanzas" class="section">
+      <div class="section-header">
+        <span class="section-icon">💰</span>
+        <h2>Finanzas</h2>
+        <button class="btn-add" onclick="openModal('finanza')">＋ Nuevo movimiento</button>
+      </div>
+      <div class="fin-summary" id="fin-summary"></div>
+      <div class="search-bar">
+        <input type="text" id="search-fin" placeholder="Buscar..." oninput="renderSec('finanzas')">
+        <select id="filter-fin-tipo" onchange="renderSec('finanzas')">
+          <option value="">Todos</option>
+          <option value="ingreso">Ingreso</option>
+          <option value="gasto">Gasto</option>
+        </select>
+        <select id="filter-fin-cat" id="filter-fin-cat" onchange="renderSec('finanzas')">
+          <option value="">Todas las categorías</option>
+          <option>Alimentación</option><option>Transporte</option><option>Salud</option>
+          <option>Educación</option><option>Entretenimiento</option><option>Ropa</option>
+          <option>Servicios</option><option>Ahorros</option><option>Trabajo</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="list-finanzas"></div>
+    </section>
+
+    <!-- ======================================================
+         BACKUP
+    ====================================================== -->
+    <section id="sec-backup" class="section">
+      <div class="section-header">
+        <span class="section-icon">☁️</span>
+        <h2>Backups</h2>
+      </div>
+      <div class="backup-card">
+        <h4>💾 Crear backup</h4>
+        <p>Descarga toda tu información como un archivo <code>.json</code> para guardarla de forma segura.</p>
+        <button class="btn-backup btn-backup-crear" onclick="crearBackup()">⬇️ Descargar backup</button>
+      </div>
+      <div class="backup-card">
+        <h4>📂 Restaurar backup</h4>
+        <p>Carga un archivo <code>.json</code> generado por esta app para restaurar tu información. <strong>⚠️ Esto reemplazará los datos actuales.</strong></p>
+        <button class="btn-backup btn-backup-cargar" onclick="document.getElementById('backup-file-input').click()">⬆️ Cargar backup</button>
+        <input type="file" id="backup-file-input" accept=".json" onchange="cargarBackup(event)">
+        <div id="backup-msg" style="display:none" class="backup-msg"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* =============================================================
+   ESTADO GLOBAL — CLAVES LOCALSTORAGE
+   ============================================================= */
+const KEYS = {
+  recordatorios: 'agenda_recordatorios',
+  medicamentos:  'agenda_medicamentos',
+  ciclo:         'agenda_ciclo',
+  rutinas:       'agenda_rutinas',
+  examenes:      'agenda_examenes',
+  clases:        'agenda_clases',
+  comidas:       'agenda_comidas',
+  finanzas:      'agenda_finanzas'
+};
+const BACKUP_VERSION = '1.0';
+
+/* =============================================================
+   UTILIDADES LOCALSTORAGE
+   ============================================================= */
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem(KEYS[key]) || '[]'); }
+  catch { return []; }
+}
+function saveData(key, arr) {
+  localStorage.setItem(KEYS[key], JSON.stringify(arr));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+/* =============================================================
+   NAVEGACIÓN
+   ============================================================= */
+function goTo(sec) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + sec).classList.add('active');
+  document.querySelector(`[data-section="${sec}"]`).classList.add('active');
+  // Actualiza topbar title
+  const labels = {
+    inicio:'✿ Mi Agenda', recordatorios:'🔔 Recordatorios', medicamentos:'💊 Medicamentos',
+    ciclo:'🌸 Ciclo Menstrual', rutinas:'⭐ Rutinas', examenes:'📚 Exámenes y Tareas',
+    clases:'🎓 Clases', comidas:'🍽️ Comidas', finanzas:'💰 Finanzas', backup:'☁️ Backups'
+  };
+  document.getElementById('topbar-title').textContent = labels[sec] || 'Mi Agenda';
+  // Cierra sidebar en móvil
+  if (window.innerWidth <= 700) { toggleSidebar(false); }
+  // Renderiza
+  if (sec === 'inicio') { renderDash(); }
+  else if (KEYS[sec]) { renderSec(sec); }
+}
+
+function toggleSidebar(force) {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('overlay');
+  const open = typeof force === 'boolean' ? force : !s.classList.contains('open');
+  s.classList.toggle('open', open);
+  o.classList.toggle('open', open);
+}
+
+/* =============================================================
+   TOAST
+   ============================================================= */
+function toast(msg, type = 'ok') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* =============================================================
+   CONFIRMACIÓN
+   ============================================================= */
+let confirmCallback = null;
+function confirm(title, body, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent = body;
+  confirmCallback = cb;
+  document.getElementById('confirm-backdrop').classList.add('open');
+}
+document.getElementById('confirm-ok-btn').onclick = () => {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+};
+function closeConfirm() {
+  document.getElementById('confirm-backdrop').classList.remove('open');
+  confirmCallback = null;
+}
+
+/* =============================================================
+   MODAL
+   ============================================================= */
+let currentModal = null;
+let editId = null;
+
+function openModal(tipo, id) {
+  currentModal = tipo;
+  editId = id || null;
+  const data = id ? getData(tipo === 'recordatorio' ? 'recordatorios' :
+    tipo === 'medicamento' ? 'medicamentos' : tipo === 'ciclo' ? 'ciclo' :
+    tipo === 'rutina' ? 'rutinas' : tipo === 'examen' ? 'examenes' :
+    tipo === 'clase' ? 'clases' : tipo === 'comida' ? 'comidas' : 'finanzas')
+    .find(x => x.id === id) : null;
+  document.getElementById('modal-content').innerHTML = buildForm(tipo, data);
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+  currentModal = null; editId = null;
+}
+function closeModalOutside(e) {
+  if (e.target.id === 'modal-backdrop') closeModal();
+}
+
+/* =============================================================
+   CONSTRUCCIÓN DE FORMULARIOS
+   ============================================================= */
+function v(d, f, def='') { return d && d[f] !== undefined ? d[f] : def; }
+
+function buildForm(tipo, d) {
+  const icons = { recordatorio:'🔔', medicamento:'💊', ciclo:'🌸', rutina:'⭐',
+                  examen:'📚', clase:'🎓', comida:'🍽️', finanza:'💰' };
+  const titles = { recordatorio:'Recordatorio', medicamento:'Medicamento', ciclo:'Ciclo menstrual',
+                   rutina:'Rutina', examen:'Examen / Tarea', clase:'Clase', comida:'Comida', finanza:'Finanzas' };
+  let form = `<div class="modal-header">
+    <span style="font-size:1.5rem">${icons[tipo]}</span>
+    <h3>${d ? 'Editar' : 'Nuevo'} ${titles[tipo]}</h3>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div><div class="form-grid">`;
+
+  if (tipo === 'recordatorio') {
+    form += `
+      <div class="form-group"><label>Título</label><input id="f-titulo" value="${v(d,'titulo')}" placeholder="Ej: Llamar al médico"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha" value="${v(d,'fecha')}"></div>
+        <div class="form-group"><label>Hora</label><input type="time" id="f-hora" value="${v(d,'hora')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Prioridad</label>
+          <select id="f-prioridad">
+            <option value="alta" ${v(d,'prioridad')==='alta'?'selected':''}>Alta</option>
+            <option value="media" ${v(d,'prioridad','media')==='media'?'selected':''}>Media</option>
+            <option value="baja" ${v(d,'prioridad')==='baja'?'selected':''}>Baja</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Estado</label>
+          <select id="f-estado">
+            <option value="pendiente" ${v(d,'estado','pendiente')==='pendiente'?'selected':''}>Pendiente</option>
+            <option value="completado" ${v(d,'estado')==='completado'?'selected':''}>Completado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'medicamento') {
+    form += `
+      <div class="form-group"><label>Nombre del medicamento</label><input id="f-nombre" value="${v(d,'nombre')}" placeholder="Ej: Ibuprofeno"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Dosis</label><input id="f-dosis" value="${v(d,'dosis')}" placeholder="Ej: 400mg"></div>
+        <div class="form-group"><label>Hora</label><input type="time" id="f-hora" value="${v(d,'hora')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Frecuencia</label><input id="f-frecuencia" value="${v(d,'frecuencia')}" placeholder="Ej: Cada 8 horas"></div>
+        <div class="form-group"><label>Fecha inicio</label><input type="date" id="f-fecha" value="${v(d,'fecha')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Estado</label>
+          <select id="f-estado">
+            <option value="no tomado" ${v(d,'estado','no tomado')==='no tomado'?'selected':''}>No tomado</option>
+            <option value="tomado" ${v(d,'estado')==='tomado'?'selected':''}>Tomado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'ciclo') {
+    form += `
+      <div class="form-row">
+        <div class="form-group"><label>Fecha inicio</label><input type="date" id="f-inicio" value="${v(d,'inicio')}"></div>
+        <div class="form-group"><label>Fecha fin</label><input type="date" id="f-fin" value="${v(d,'fin')}"></div>
+      </div>
+      <div class="form-group"><label>Síntomas</label><input id="f-sintomas" value="${v(d,'sintomas')}" placeholder="Ej: Cólicos, fatiga..."></div>
+      <div class="form-group"><label>Estado de ánimo</label>
+        <select id="f-animo">
+          <option value="tranquila" ${v(d,'animo')==='tranquila'?'selected':''}>😊 Tranquila</option>
+          <option value="irritable" ${v(d,'animo')==='irritable'?'selected':''}>😤 Irritable</option>
+          <option value="triste"    ${v(d,'animo')==='triste'?'selected':''}>😢 Triste</option>
+          <option value="ansiosa"   ${v(d,'animo')==='ansiosa'?'selected':''}>😰 Ansiosa</option>
+          <option value="feliz"     ${v(d,'animo')==='feliz'?'selected':''}>😄 Feliz</option>
+          <option value="cansada"   ${v(d,'animo')==='cansada'?'selected':''}>😴 Cansada</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'rutina') {
+    form += `
+      <div class="form-group"><label>Nombre de la rutina</label><input id="f-nombre" value="${v(d,'nombre')}" placeholder="Ej: Rutina matutina"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Día / Frecuencia</label><input id="f-dia" value="${v(d,'dia')}" placeholder="Ej: Lunes, Diario..."></div>
+        <div class="form-group"><label>Hora</label><input type="time" id="f-hora" value="${v(d,'hora')}"></div>
+      </div>
+      <div class="form-group"><label>Actividades (separadas por coma)</label><input id="f-actividades" value="${v(d,'actividades')}" placeholder="Ej: Meditar, Ejercicio, Ducha"></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="f-estado">
+          <option value="pendiente"  ${v(d,'estado','pendiente')==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="completada" ${v(d,'estado')==='completada'?'selected':''}>Completada</option>
+        </select>
+      </div>`;
+  }
+  else if (tipo === 'examen') {
+    form += `
+      <div class="form-row">
+        <div class="form-group"><label>Tipo</label>
+          <select id="f-tipo">
+            <option value="examen"  ${v(d,'tipo','examen')==='examen'?'selected':''}>Examen</option>
+            <option value="tarea"   ${v(d,'tipo')==='tarea'?'selected':''}>Tarea</option>
+            <option value="trabajo" ${v(d,'tipo')==='trabajo'?'selected':''}>Trabajo</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Nombre</label><input id="f-nombre" value="${v(d,'nombre')}" placeholder="Ej: Parcial de Química"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Materia</label><input id="f-materia" value="${v(d,'materia')}" placeholder="Ej: Biología"></div>
+        <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha" value="${v(d,'fecha')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Prioridad</label>
+          <select id="f-prioridad">
+            <option value="alta"  ${v(d,'prioridad','alta')==='alta'?'selected':''}>Alta</option>
+            <option value="media" ${v(d,'prioridad')==='media'?'selected':''}>Media</option>
+            <option value="baja"  ${v(d,'prioridad')==='baja'?'selected':''}>Baja</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Estado</label>
+          <select id="f-estado">
+            <option value="pendiente" ${v(d,'estado','pendiente')==='pendiente'?'selected':''}>Pendiente</option>
+            <option value="entregado" ${v(d,'estado')==='entregado'?'selected':''}>Entregado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Descripción</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'clase') {
+    form += `
+      <div class="form-row">
+        <div class="form-group"><label>Materia</label><input id="f-materia" value="${v(d,'materia')}" placeholder="Ej: Matemáticas"></div>
+        <div class="form-group"><label>Profesor/a</label><input id="f-profesor" value="${v(d,'profesor')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Día</label>
+          <select id="f-dia">
+            ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(d2=>`<option ${v(d,'dia')===d2?'selected':''}>${d2}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Hora inicio</label><input type="time" id="f-hora-inicio" value="${v(d,'horaInicio')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Hora fin</label><input type="time" id="f-hora-fin" value="${v(d,'horaFin')}"></div>
+        <div class="form-group"><label>Lugar / Modalidad</label><input id="f-lugar" value="${v(d,'lugar')}" placeholder="Ej: Aula 3 / Virtual"></div>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'comida') {
+    form += `
+      <div class="form-row">
+        <div class="form-group"><label>Tipo</label>
+          <select id="f-tipo">
+            <option value="desayuno" ${v(d,'tipo','desayuno')==='desayuno'?'selected':''}>🌅 Desayuno</option>
+            <option value="almuerzo" ${v(d,'tipo')==='almuerzo'?'selected':''}>☀️ Almuerzo</option>
+            <option value="cena"     ${v(d,'tipo')==='cena'?'selected':''}>🌙 Cena</option>
+            <option value="snack"    ${v(d,'tipo')==='snack'?'selected':''}>🍎 Snack</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Hora</label><input type="time" id="f-hora" value="${v(d,'hora')}"></div>
+      </div>
+      <div class="form-group"><label>Alimentos</label><input id="f-alimentos" value="${v(d,'alimentos')}" placeholder="Ej: Avena, frutas, jugo..."></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="f-estado">
+          <option value="no realizado" ${v(d,'estado','no realizado')==='no realizado'?'selected':''}>No realizado</option>
+          <option value="realizado"    ${v(d,'estado')==='realizado'?'selected':''}>Realizado</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+  else if (tipo === 'finanza') {
+    form += `
+      <div class="form-row">
+        <div class="form-group"><label>Tipo</label>
+          <select id="f-tipo">
+            <option value="ingreso" ${v(d,'tipo','ingreso')==='ingreso'?'selected':''}>💚 Ingreso</option>
+            <option value="gasto"   ${v(d,'tipo')==='gasto'?'selected':''}>🔴 Gasto</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Categoría</label>
+          <select id="f-categoria">
+            ${['Alimentación','Transporte','Salud','Educación','Entretenimiento','Ropa','Servicios','Ahorros','Trabajo','Otro']
+              .map(c=>`<option ${v(d,'categoria')===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Monto</label><input type="number" id="f-monto" value="${v(d,'monto')}" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha" value="${v(d,'fecha')}"></div>
+      </div>
+      <div class="form-group"><label>Método de pago</label>
+        <select id="f-metodo">
+          ${['Efectivo','Tarjeta de débito','Tarjeta de crédito','Transferencia','Otro']
+            .map(m=>`<option ${v(d,'metodo')===m?'selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Descripción</label><textarea id="f-notas">${v(d,'notas')}</textarea></div>`;
+  }
+
+  form += `</div>
+  <div class="form-actions">
+    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" onclick="guardarRegistro()">💾 Guardar</button>
+  </div>`;
+  return form;
+}
+
+/* =============================================================
+   GUARDAR REGISTRO
+   ============================================================= */
+function guardarRegistro() {
+  const t = currentModal;
+  let obj = { id: editId || genId() };
+
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+  if (t === 'recordatorio') {
+    if (!g('f-titulo')) { toast('El título es obligatorio.','err'); return; }
+    obj = { ...obj, titulo: g('f-titulo'), fecha: g('f-fecha'), hora: g('f-hora'),
+            prioridad: g('f-prioridad'), estado: g('f-estado'), notas: g('f-notas') };
+    upsert('recordatorios', obj);
+  }
+  else if (t === 'medicamento') {
+    if (!g('f-nombre')) { toast('El nombre es obligatorio.','err'); return; }
+    obj = { ...obj, nombre: g('f-nombre'), dosis: g('f-dosis'), hora: g('f-hora'),
+            frecuencia: g('f-frecuencia'), fecha: g('f-fecha'), estado: g('f-estado'), notas: g('f-notas') };
+    upsert('medicamentos', obj);
+  }
+  else if (t === 'ciclo') {
+    if (!g('f-inicio')) { toast('La fecha de inicio es obligatoria.','err'); return; }
+    obj = { ...obj, inicio: g('f-inicio'), fin: g('f-fin'), sintomas: g('f-sintomas'),
+            animo: g('f-animo'), notas: g('f-notas') };
+    upsert('ciclo', obj);
+  }
+  else if (t === 'rutina') {
+    if (!g('f-nombre')) { toast('El nombre es obligatorio.','err'); return; }
+    obj = { ...obj, nombre: g('f-nombre'), dia: g('f-dia'), hora: g('f-hora'),
+            actividades: g('f-actividades'), estado: g('f-estado') };
+    upsert('rutinas', obj);
+  }
+  else if (t === 'examen') {
+    if (!g('f-nombre')) { toast('El nombre es obligatorio.','err'); return; }
+    obj = { ...obj, tipo: g('f-tipo'), nombre: g('f-nombre'), materia: g('f-materia'),
+            fecha: g('f-fecha'), prioridad: g('f-prioridad'), estado: g('f-estado'), notas: g('f-notas') };
+    upsert('examenes', obj);
+  }
+  else if (t === 'clase') {
+    if (!g('f-materia')) { toast('La materia es obligatoria.','err'); return; }
+    obj = { ...obj, materia: g('f-materia'), profesor: g('f-profesor'), dia: g('f-dia'),
+            horaInicio: g('f-hora-inicio'), horaFin: g('f-hora-fin'), lugar: g('f-lugar'), notas: g('f-notas') };
+    upsert('clases', obj);
+  }
+  else if (t === 'comida') {
+    if (!g('f-alimentos')) { toast('Los alimentos son obligatorios.','err'); return; }
+    obj = { ...obj, tipo: g('f-tipo'), hora: g('f-hora'), alimentos: g('f-alimentos'),
+            estado: g('f-estado'), notas: g('f-notas') };
+    upsert('comidas', obj);
+  }
+  else if (t === 'finanza') {
+    if (!g('f-monto') || isNaN(parseFloat(g('f-monto')))) { toast('El monto es obligatorio.','err'); return; }
+    obj = { ...obj, tipo: g('f-tipo'), categoria: g('f-categoria'), monto: parseFloat(g('f-monto')),
+            fecha: g('f-fecha'), metodo: g('f-metodo'), notas: g('f-notas') };
+    upsert('finanzas', obj);
+  }
+
+  closeModal();
+  toast(editId ? 'Registro actualizado ✨' : 'Registro guardado ✨', 'ok');
+  // Renderiza la sección activa
+  const secMap = { recordatorio:'recordatorios', medicamento:'medicamentos', ciclo:'ciclo',
+                   rutina:'rutinas', examen:'examenes', clase:'clases', comida:'comidas', finanza:'finanzas' };
+  renderSec(secMap[t]);
+  updateBadges();
+  if (document.getElementById('sec-inicio').classList.contains('active')) renderDash();
+}
+
+function upsert(key, obj) {
+  let arr = getData(key);
+  const idx = arr.findIndex(x => x.id === obj.id);
+  if (idx >= 0) arr[idx] = obj;
+  else arr.unshift(obj);
+  saveData(key, arr);
+}
+
+/* =============================================================
+   ELIMINAR
+   ============================================================= */
+function eliminar(key, id) {
+  confirm('Eliminar registro', '¿Estás segura de que quieres eliminar este registro? Esta acción no se puede deshacer.', () => {
+    let arr = getData(key).filter(x => x.id !== id);
+    saveData(key, arr);
+    renderSec(key);
+    updateBadges();
+    toast('Registro eliminado.', 'ok');
+    if (document.getElementById('sec-inicio').classList.contains('active')) renderDash();
+  });
+}
+
+/* =============================================================
+   RENDERIZADO DE SECCIONES
+   ============================================================= */
+function renderSec(sec) {
+  if (sec === 'recordatorios') renderRecordatorios();
+  else if (sec === 'medicamentos') renderMedicamentos();
+  else if (sec === 'ciclo') renderCiclo();
+  else if (sec === 'rutinas') renderRutinas();
+  else if (sec === 'examenes') renderExamenes();
+  else if (sec === 'clases') renderClases();
+  else if (sec === 'comidas') renderComidas();
+  else if (sec === 'finanzas') renderFinanzas();
+}
+
+/* Helper: render cards en un contenedor */
+function renderCards(containerId, items, buildCardFn) {
+  const el = document.getElementById(containerId);
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🌸</div>No hay registros todavía. ¡Agrega el primero!</div>`;
+    return;
+  }
+  el.innerHTML = items.map(buildCardFn).join('');
+}
+
+/* BADGE helpers */
+function badgePrioridad(p) {
+  const m = { alta:'badge-alta', media:'badge-media', baja:'badge-baja' };
+  const e = { alta:'🔴 Alta', media:'🟡 Media', baja:'🟢 Baja' };
+  return `<span class="badge ${m[p]||'badge-info'}">${e[p]||p}</span>`;
+}
+function badgeEstado(e) {
+  const m = { pendiente:'badge-pend', completado:'badge-done', tomado:'badge-done',
+              'no tomado':'badge-pend', completada:'badge-done', entregado:'badge-done',
+              realizado:'badge-done', 'no realizado':'badge-pend' };
+  return `<span class="badge ${m[e]||'badge-info'}">${e}</span>`;
+}
+function fmt(fecha) {
+  if (!fecha) return '';
+  const [y,m,d] = fecha.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* --- RECORDATORIOS --- */
+function renderRecordatorios() {
+  const q = (document.getElementById('search-rec')||{}).value||'';
+  const fe = (document.getElementById('filter-rec-estado')||{}).value||'';
+  const fp = (document.getElementById('filter-rec-prioridad')||{}).value||'';
+  let arr = getData('recordatorios').filter(x =>
+    (!q || x.titulo.toLowerCase().includes(q.toLowerCase()) || (x.notas||'').toLowerCase().includes(q.toLowerCase())) &&
+    (!fe || x.estado === fe) && (!fp || x.prioridad === fp)
+  );
+  renderCards('list-recordatorios', arr, x => `
+    <div class="card">
+      <div class="card-title">${esc(x.titulo)}</div>
+      <div class="card-meta">
+        ${x.fecha?`<span>📅 ${fmt(x.fecha)}</span>`:''}
+        ${x.hora?`<span>🕐 ${x.hora}</span>`:''}
+        ${badgePrioridad(x.prioridad)} ${badgeEstado(x.estado)}
+      </div>
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('recordatorio','${x.id}')" title="Editar">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('recordatorios','${x.id}')" title="Eliminar">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- MEDICAMENTOS --- */
+function renderMedicamentos() {
+  const q = (document.getElementById('search-med')||{}).value||'';
+  const fe = (document.getElementById('filter-med-estado')||{}).value||'';
+  let arr = getData('medicamentos').filter(x =>
+    (!q || x.nombre.toLowerCase().includes(q.toLowerCase())) && (!fe || x.estado === fe)
+  );
+  renderCards('list-medicamentos', arr, x => `
+    <div class="card">
+      <div class="card-title">${esc(x.nombre)}</div>
+      <div class="card-meta">
+        ${x.dosis?`<span>💊 ${esc(x.dosis)}</span>`:''}
+        ${x.hora?`<span>🕐 ${x.hora}</span>`:''}
+        ${x.frecuencia?`<span>🔁 ${esc(x.frecuencia)}</span>`:''}
+        ${x.fecha?`<span>📅 ${fmt(x.fecha)}</span>`:''}
+        ${badgeEstado(x.estado)}
+      </div>
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('medicamento','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('medicamentos','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- CICLO MENSTRUAL --- */
+function renderCiclo() {
+  const arr = getData('ciclo');
+  // Predicción
+  const pred = document.getElementById('ciclo-prediccion');
+  if (arr.length >= 1) {
+    const last = arr.slice().sort((a,b)=>b.inicio.localeCompare(a.inicio))[0];
+    const nextDate = new Date(last.inicio);
+    nextDate.setDate(nextDate.getDate() + 28);
+    const dd = nextDate.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'});
+    document.getElementById('ciclo-pred-titulo').textContent = 'Próximo ciclo estimado (promedio 28 días)';
+    document.getElementById('ciclo-pred-detalle').textContent = `Basado en el último registro (${fmt(last.inicio)}): aprox. el ${dd}`;
+    pred.style.display = 'flex';
+  } else { pred.style.display = 'none'; }
+
+  const animoEmoji = { tranquila:'😊', irritable:'😤', triste:'😢', ansiosa:'😰', feliz:'😄', cansada:'😴' };
+  renderCards('list-ciclo', arr, x => `
+    <div class="card">
+      <div class="card-title">🌸 Ciclo</div>
+      <div class="card-meta">
+        <span>📅 Inicio: ${fmt(x.inicio)}</span>
+        ${x.fin?`<span>📅 Fin: ${fmt(x.fin)}</span>`:''}
+        ${x.animo?`<span>${animoEmoji[x.animo]||''} ${x.animo}</span>`:''}
+      </div>
+      ${x.sintomas?`<div class="card-notes">🩺 ${esc(x.sintomas)}</div>`:''}
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('ciclo','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('ciclo','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- RUTINAS --- */
+function renderRutinas() {
+  const q = (document.getElementById('search-rut')||{}).value||'';
+  const fe = (document.getElementById('filter-rut-estado')||{}).value||'';
+  let arr = getData('rutinas').filter(x =>
+    (!q || x.nombre.toLowerCase().includes(q.toLowerCase())) && (!fe || x.estado === fe)
+  );
+  renderCards('list-rutinas', arr, x => `
+    <div class="card">
+      <div class="card-title">${esc(x.nombre)}</div>
+      <div class="card-meta">
+        ${x.dia?`<span>📆 ${esc(x.dia)}</span>`:''}
+        ${x.hora?`<span>🕐 ${x.hora}</span>`:''}
+        ${badgeEstado(x.estado)}
+      </div>
+      ${x.actividades?`<div class="card-notes">• ${esc(x.actividades).replace(/,/g,'<br>•')}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('rutina','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('rutinas','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- EXÁMENES --- */
+function renderExamenes() {
+  const q = (document.getElementById('search-exa')||{}).value||'';
+  const ft = (document.getElementById('filter-exa-tipo')||{}).value||'';
+  const fe = (document.getElementById('filter-exa-estado')||{}).value||'';
+  const tipoIcon = { examen:'📝', tarea:'📌', trabajo:'🗂️' };
+  let arr = getData('examenes').filter(x =>
+    (!q || x.nombre.toLowerCase().includes(q.toLowerCase()) || (x.materia||'').toLowerCase().includes(q.toLowerCase())) &&
+    (!ft || x.tipo === ft) && (!fe || x.estado === fe)
+  );
+  renderCards('list-examenes', arr, x => `
+    <div class="card">
+      <div class="card-title">${tipoIcon[x.tipo]||'📚'} ${esc(x.nombre)}</div>
+      <div class="card-meta">
+        ${x.materia?`<span>🎓 ${esc(x.materia)}</span>`:''}
+        ${x.fecha?`<span>📅 ${fmt(x.fecha)}</span>`:''}
+        ${badgePrioridad(x.prioridad)} ${badgeEstado(x.estado)}
+      </div>
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('examen','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('examenes','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- CLASES --- */
+function renderClases() {
+  const q = (document.getElementById('search-cla')||{}).value||'';
+  const fd = (document.getElementById('filter-cla-dia')||{}).value||'';
+  const diasOrd = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  let arr = getData('clases').filter(x =>
+    (!q || x.materia.toLowerCase().includes(q.toLowerCase()) || (x.profesor||'').toLowerCase().includes(q.toLowerCase())) &&
+    (!fd || x.dia === fd)
+  ).sort((a,b)=> diasOrd.indexOf(a.dia)-diasOrd.indexOf(b.dia) || (a.horaInicio||'').localeCompare(b.horaInicio||''));
+  renderCards('list-clases', arr, x => `
+    <div class="card">
+      <div class="card-title">${esc(x.materia)}</div>
+      <div class="card-meta">
+        ${x.dia?`<span>📆 ${x.dia}</span>`:''}
+        ${x.horaInicio?`<span>🕐 ${x.horaInicio}${x.horaFin?' – '+x.horaFin:''}</span>`:''}
+        ${x.lugar?`<span>📍 ${esc(x.lugar)}</span>`:''}
+      </div>
+      ${x.profesor?`<div class="card-notes">👩‍🏫 ${esc(x.profesor)}</div>`:''}
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('clase','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('clases','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- COMIDAS --- */
+function renderComidas() {
+  const q = (document.getElementById('search-com')||{}).value||'';
+  const ft = (document.getElementById('filter-com-tipo')||{}).value||'';
+  const tipoIcon = { desayuno:'🌅', almuerzo:'☀️', cena:'🌙', snack:'🍎' };
+  const tipoOrd  = ['desayuno','almuerzo','snack','cena'];
+  let arr = getData('comidas').filter(x =>
+    (!q || (x.alimentos||'').toLowerCase().includes(q.toLowerCase())) && (!ft || x.tipo === ft)
+  ).sort((a,b)=> tipoOrd.indexOf(a.tipo)-tipoOrd.indexOf(b.tipo));
+  renderCards('list-comidas', arr, x => `
+    <div class="card">
+      <div class="card-title">${tipoIcon[x.tipo]||'🍽️'} ${x.tipo.charAt(0).toUpperCase()+x.tipo.slice(1)}</div>
+      <div class="card-meta">
+        ${x.hora?`<span>🕐 ${x.hora}</span>`:''}
+        ${badgeEstado(x.estado)}
+      </div>
+      <div class="card-notes">${esc(x.alimentos)}</div>
+      ${x.notas?`<div class="card-notes" style="margin-top:4px">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('comida','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('comidas','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+/* --- FINANZAS --- */
+function renderFinanzas() {
+  const q = (document.getElementById('search-fin')||{}).value||'';
+  const ft = (document.getElementById('filter-fin-tipo')||{}).value||'';
+  const fc = (document.getElementById('filter-fin-cat')||{}).value||'';
+  let all = getData('finanzas');
+  const totalIng = all.filter(x=>x.tipo==='ingreso').reduce((s,x)=>s+x.monto,0);
+  const totalGas = all.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.monto,0);
+  const balance  = totalIng - totalGas;
+  document.getElementById('fin-summary').innerHTML = `
+    <div class="fin-box"><div class="fin-box-label">💚 Total ingresos</div><div class="fin-box-value fin-verde">₡${fmt2(totalIng)}</div></div>
+    <div class="fin-box"><div class="fin-box-label">🔴 Total gastos</div><div class="fin-box-value fin-rojo">₡${fmt2(totalGas)}</div></div>
+    <div class="fin-box"><div class="fin-box-label">💙 Balance</div><div class="fin-box-value ${balance>=0?'fin-azul':'fin-rojo'}">₡${fmt2(balance)}</div></div>`;
+  let arr = all.filter(x =>
+    (!q || (x.notas||'').toLowerCase().includes(q.toLowerCase()) || (x.categoria||'').toLowerCase().includes(q.toLowerCase())) &&
+    (!ft || x.tipo === ft) && (!fc || x.categoria === fc)
+  ).sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
+  renderCards('list-finanzas', arr, x => `
+    <div class="card">
+      <div class="card-title">${x.tipo==='ingreso'?'💚':'🔴'} ${x.categoria}</div>
+      <div class="card-meta">
+        <span style="font-size:1.1rem;font-weight:900;color:${x.tipo==='ingreso'?'#1D6435':'#B0223D'}">₡${fmt2(x.monto)}</span>
+        ${x.fecha?`<span>📅 ${fmt(x.fecha)}</span>`:''}
+        <span class="badge ${x.tipo==='ingreso'?'badge-ing':'badge-gasto'}">${x.tipo}</span>
+      </div>
+      ${x.metodo?`<div class="card-notes">💳 ${esc(x.metodo)}</div>`:''}
+      ${x.notas?`<div class="card-notes">${esc(x.notas)}</div>`:''}
+      <div class="card-actions">
+        <button class="btn-icon" onclick="openModal('finanza','${x.id}')">✏️</button>
+        <button class="btn-icon del" onclick="eliminar('finanzas','${x.id}')">🗑️</button>
+      </div>
+    </div>`);
+}
+
+function fmt2(n) { return n.toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+/* =============================================================
+   DASHBOARD
+   ============================================================= */
+function renderDash() {
+  // Saludo por hora
+  const hr = new Date().getHours();
+  const saludo = hr < 12 ? '¡Buenos días!' : hr < 18 ? '¡Buenas tardes!' : '¡Buenas noches!';
+  document.getElementById('dash-greeting').textContent = saludo + ' ✨';
+  const now = new Date();
+  document.getElementById('dash-date').textContent =
+    now.toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Datos para cards
+  const recs    = getData('recordatorios');
+  const meds    = getData('medicamentos');
+  const exams   = getData('examenes');
+  const fin     = getData('finanzas');
+  const clases  = getData('clases');
+  const comidas = getData('comidas');
+
+  const pendRec  = recs.filter(x=>x.estado==='pendiente').length;
+  const medHoy   = meds.filter(x=>x.estado==='no tomado').length;
+  const pendExam = exams.filter(x=>x.estado==='pendiente').length;
+  const balance  = fin.reduce((s,x)=>x.tipo==='ingreso'?s+x.monto:s-x.monto,0);
+
+  // Próxima clase (día de hoy en adelante)
+  const diasSemana = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const hoy = diasSemana[now.getDay()];
+  const diasOrd = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const claseHoy = clases.filter(x=>x.dia===hoy).sort((a,b)=>(a.horaInicio||'').localeCompare(b.horaInicio||''))[0];
+
+  const tipoOrd  = ['desayuno','almuerzo','snack','cena'];
+  const comidaProx = comidas.filter(x=>x.estado!=='realizado').sort((a,b)=>tipoOrd.indexOf(a.tipo)-tipoOrd.indexOf(b.tipo))[0];
+
+  // Próximo ciclo
+  const cicloArr = getData('ciclo').sort((a,b)=>b.inicio.localeCompare(a.inicio));
+  let cicloSub = 'Sin datos';
+  if (cicloArr.length) {
+    const nd = new Date(cicloArr[0].inicio); nd.setDate(nd.getDate()+28);
+    cicloSub = 'Aprox. ' + nd.toLocaleDateString('es-CR',{day:'2-digit',month:'short'});
+  }
+
+  document.getElementById('dash-grid').innerHTML = `
+    <div class="dash-card" onclick="goTo('recordatorios')">
+      <div class="dash-card-icon">🔔</div>
+      <div class="dash-card-label">Recordatorios pendientes</div>
+      <div class="dash-card-value">${pendRec}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('medicamentos')">
+      <div class="dash-card-icon">💊</div>
+      <div class="dash-card-label">Medicamentos pendientes</div>
+      <div class="dash-card-value">${medHoy}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('examenes')">
+      <div class="dash-card-icon">📚</div>
+      <div class="dash-card-label">Tareas / exámenes pendientes</div>
+      <div class="dash-card-value">${pendExam}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('finanzas')">
+      <div class="dash-card-icon">💰</div>
+      <div class="dash-card-label">Balance actual</div>
+      <div class="dash-card-value" style="font-size:1.1rem;color:${balance>=0?'#1D6435':'#B0223D'}">₡${fmt2(balance)}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('clases')">
+      <div class="dash-card-icon">🎓</div>
+      <div class="dash-card-label">Próxima clase hoy</div>
+      <div class="dash-card-value" style="font-size:1rem">${claseHoy?esc(claseHoy.materia):'—'}</div>
+      <div class="dash-card-sub">${claseHoy?(claseHoy.horaInicio||''):'Sin clase hoy'}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('comidas')">
+      <div class="dash-card-icon">🍽️</div>
+      <div class="dash-card-label">Próxima comida</div>
+      <div class="dash-card-value" style="font-size:1rem">${comidaProx?esc(comidaProx.tipo):'—'}</div>
+      <div class="dash-card-sub">${comidaProx?(comidaProx.hora||''):'Sin registro'}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('ciclo')">
+      <div class="dash-card-icon">🌸</div>
+      <div class="dash-card-label">Próximo ciclo estimado</div>
+      <div class="dash-card-value" style="font-size:0.95rem">${cicloSub}</div>
+    </div>
+    <div class="dash-card" onclick="goTo('rutinas')">
+      <div class="dash-card-icon">⭐</div>
+      <div class="dash-card-label">Rutinas activas</div>
+      <div class="dash-card-value">${getData('rutinas').length}</div>
+    </div>`;
+}
+
+/* =============================================================
+   BADGES DE NAVEGACIÓN
+   ============================================================= */
+function updateBadges() {
+  const pendRec = getData('recordatorios').filter(x=>x.estado==='pendiente').length;
+  const b = document.getElementById('badge-rec');
+  if (b) b.textContent = pendRec;
+}
+
+/* =============================================================
+   BACKUP
+   ============================================================= */
+function crearBackup() {
+  const payload = { version: BACKUP_VERSION, created: new Date().toISOString() };
+  Object.keys(KEYS).forEach(k => { payload[k] = getData(k); });
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const fecha = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `agenda-backup-${fecha}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Backup descargado exitosamente 💾', 'ok');
+}
+
+function cargarBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      // Validar
+      if (!data.version || !data.created) {
+        mostrarMsgBackup('❌ El archivo no es un backup válido de esta app.', 'err');
+        return;
+      }
+      const tieneAlguna = Object.keys(KEYS).some(k => Array.isArray(data[k]));
+      if (!tieneAlguna) {
+        mostrarMsgBackup('❌ El archivo no contiene datos compatibles.', 'err');
+        return;
+      }
+      confirm(
+        '¿Restaurar backup?',
+        `Esto reemplazará TODOS tus datos actuales con el backup del ${new Date(data.created).toLocaleDateString('es-CR')}. ¿Continuar?`,
+        () => {
+          Object.keys(KEYS).forEach(k => {
+            if (Array.isArray(data[k])) saveData(k, data[k]);
+          });
+          mostrarMsgBackup('✅ Backup restaurado exitosamente. Todos los datos fueron cargados.', 'ok');
+          toast('Datos restaurados ✨', 'ok');
+          updateBadges();
+        }
+      );
+    } catch { mostrarMsgBackup('❌ Error al leer el archivo. Asegúrate de que sea un .json válido.', 'err'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function mostrarMsgBackup(msg, tipo) {
+  const el = document.getElementById('backup-msg');
+  el.textContent = msg;
+  el.className = 'backup-msg ' + tipo;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+/* =============================================================
+   HELPER: escape HTML
+   ============================================================= */
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =============================================================
+   INIT
+   ============================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  renderDash();
+  updateBadges();
+});
+</script>
+</body>
+</html>
