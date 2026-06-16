@@ -64,7 +64,7 @@ body::before {
 #sidebar {
   width: 240px;
   min-height: 100vh;
-  background: linear-gradient(160deg, #FBD8DF 0%, #FEEFF2 60%, #F098AC22 100%);
+  background: #FEEFF2;
   border-right: 1.5px solid var(--rosa-l);
   display: flex;
   flex-direction: column;
@@ -74,6 +74,7 @@ body::before {
   z-index: 100;
   box-shadow: 2px 0 18px rgba(201,128,145,0.10);
   transition: transform var(--trans);
+  overflow-y: auto;
 }
 #sidebar-logo {
   padding: 28px 20px 18px 20px;
@@ -135,9 +136,9 @@ body::before {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  background: var(--blanco);
+  background: #FFFFFF;
   border-bottom: 1.5px solid var(--rosa-l);
-  position: sticky; top: 0; z-index: 200;
+  position: sticky; top: 0; z-index: 300;
   box-shadow: var(--sombra);
 }
 #hamburger {
@@ -150,9 +151,11 @@ body::before {
 /* OVERLAY móvil */
 #overlay {
   display: none;
-  position: fixed; inset: 0; z-index: 99;
-  background: rgba(21,22,23,0.30);
-  backdrop-filter: blur(2px);
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  left: 240px;
+  z-index: 350;
+  background: rgba(21,22,23,0.35);
 }
 
 /* ============================================================
@@ -322,8 +325,7 @@ body::before {
 .modal-backdrop {
   display: none;
   position: fixed; inset: 0; z-index: 500;
-  background: rgba(21,22,23,0.38);
-  backdrop-filter: blur(4px);
+  background: rgba(21,22,23,0.45);
   align-items: center;
   justify-content: center;
   padding: 16px;
@@ -496,10 +498,18 @@ body::before {
    RESPONSIVE MÓVIL
    ============================================================ */
 @media (max-width: 700px) {
-  #sidebar { transform: translateX(-100%); }
-  #sidebar.open { transform: none; }
+  #sidebar {
+    transform: translateX(-100%);
+    background: #FEEFF2 !important;
+    background-image: none !important;
+    z-index: 500;
+    box-shadow: 4px 0 32px rgba(21,22,23,0.18);
+    opacity: 1 !important;
+  }
+  #sidebar.open { transform: translateX(0); }
+  #overlay { z-index: 350; }
   #overlay.open { display: block; }
-  #topbar { display: flex; }
+  #topbar { display: flex; z-index: 600; }
   #main { margin-left: 0; padding: 16px 14px 48px 14px; }
   .form-row { grid-template-columns: 1fr; }
   .fin-summary { grid-template-columns: 1fr; }
@@ -522,9 +532,6 @@ body::before {
   <button id="hamburger" onclick="toggleSidebar()">☰</button>
   <div id="topbar-title">✿ Mi Agenda</div>
 </div>
-
-<!-- OVERLAY MÓVIL -->
-<div id="overlay" onclick="toggleSidebar()"></div>
 
 <!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
@@ -572,7 +579,8 @@ body::before {
     <div class="nav-item" onclick="goTo('backup')"              data-section="backup">       <span class="icon">☁️</span> Backups</div>
   </nav>
 
-  <!-- MAIN -->
+  <!-- OVERLAY: solo cubre el main, no el sidebar -->
+  <div id="overlay" onclick="toggleSidebar()"></div>
   <main id="main">
 
     <!-- ======================================================
