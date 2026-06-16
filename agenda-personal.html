@@ -502,14 +502,16 @@ body::before {
     transform: translateX(-100%);
     background: #FEEFF2 !important;
     background-image: none !important;
-    z-index: 500;
+    z-index: 600;
+    top: 0 !important;
+    height: 100vh;
     box-shadow: 4px 0 32px rgba(21,22,23,0.18);
     opacity: 1 !important;
   }
   #sidebar.open { transform: translateX(0); }
-  #overlay { z-index: 350; }
+  #overlay { z-index: 350; left: 240px; }
   #overlay.open { display: block; }
-  #topbar { display: flex; z-index: 600; }
+  #topbar { display: flex; z-index: 400; position: sticky; top: 0; }
   #main { margin-left: 0; padding: 16px 14px 48px 14px; }
   .form-row { grid-template-columns: 1fr; }
   .fin-summary { grid-template-columns: 1fr; }
@@ -850,9 +852,11 @@ function goTo(sec) {
 function toggleSidebar(force) {
   const s = document.getElementById('sidebar');
   const o = document.getElementById('overlay');
+  const t = document.getElementById('topbar');
   const open = typeof force === 'boolean' ? force : !s.classList.contains('open');
   s.classList.toggle('open', open);
   o.classList.toggle('open', open);
+  if (t) t.style.visibility = open ? 'hidden' : 'visible';
 }
 
 /* =============================================================
